@@ -1,6 +1,7 @@
 import bpy
-
-import bpy
+from bpy_extras.io_utils import ExportHelper
+from bpy.props import *
+from bpy_types import Operator
 
 
 def write_data(context, filepath, use_some_setting):
@@ -10,11 +11,6 @@ def write_data(context, filepath, use_some_setting):
         f.close()
 
     return {'FINISHED'}
-
-
-from bpy_extras.io_utils import ExportHelper
-from bpy.props import StringProperty, BoolProperty, EnumProperty
-from bpy_types import Operator
 
 
 class EchoExporter(Operator, ExportHelper):
@@ -30,22 +26,59 @@ class EchoExporter(Operator, ExportHelper):
         maxlen=255,  # Max internal buffer length, longer would be clamped.
     )
 
-    # List of operator properties, the attributes will be assigned
-    # to the class instance from the operator settings before calling.
-    use_setting: BoolProperty(
-        name="Example Boolean",
-        description="Example Tooltip",
-        default=True,
+    # List of attributes for the EvaluationProfile
+    evaluator: EnumProperty(
+        name="Evaluator",
+        description="The available evaluators in Echo for rendering",
+        items=(
+            ("PathTracedEvaluator", "Path traced evaluator", "classical Path tracing"),
+
+        ),
+        default="PathTracedEvaluator"
     )
 
-    type: EnumProperty(
-        name="Example Enum",
-        description="Choose between two items",
+    pattern: EnumProperty(
+        name="Pattern",
+        description="The pattern in which the different parts of the image will be rendered",
         items=(
-            ('OPT_A', "First Option", "Description one"),
-            ('OPT_B', "Second Option", "Description two"),
+            ("HilbertCurve", "Hilbert Curve", "Pattern of the hilbert curve"),
         ),
-        default='OPT_A',
+        default="HilbertCurve"
+    )
+
+    max_epoch: IntProperty(
+        name="Max epoch amount",
+        description="Defines the maximum amount of Epochs",
+        min=1,
+        step=1,
+        soft_max=128,
+        default=20
+    )
+
+    buffer_width: IntProperty(
+        name="Buffer Width",
+        description="Defines the maximum width of the render buffer / rendered image",
+        min=1,
+        soft_max=1920,
+        step=1,
+        default=1920
+    )
+
+    buffer_height: IntProperty(
+        name="Buffer Height",
+        description="Defines the maximum height of the render buffer / rendered image",
+        min=1,
+        soft_max=1080,
+        step=1,
+        default=1080
+    )
+
+    distribution_extend: IntProperty(
+        name="Distribution Extend",
+        description="[to be added]",
+        min=1,
+        step=1,
+        default=16
     )
 
     def execute(self, context):
@@ -66,9 +99,14 @@ bl_info = {
     "category": "Generic"
 }
 
+
 def register():
     bpy.utils.register_class(EchoExporter)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+
+def unregister():
+    bpy.utils.unregister_class(EchoExporter)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
 
 if __name__ == "__main__":
     register()
