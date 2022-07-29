@@ -2,13 +2,38 @@ import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import *
 from bpy_types import Operator
+import os
 
 
-def write_data(context, filepath, use_some_setting):
+def create_echo_directories(filepath, texture_path, geometries_path):
+    if not os.path.exists(filepath):
+        os.mkdir(filepath)
+    if not os.path.exists(texture_path):
+        os.mkdir(texture_path)
+    if not os.path.exists(geometries_path):
+        os.mkdir(geometries_path)
+
+
+def write_echo_data(context, filepath, exporter):
     print("running write_data")
-    with open(filepath, 'w', encoding='utf-8') as f:
-        f.write("Test %s" % use_some_setting)
-        f.close()
+
+    texture_path = os.path.join(filepath, "textures")
+    geometries_path = os.path.join(filepath, "geometries")
+    echo_file_name = filepath.split('/')[-1]
+
+    create_echo_directories(filepath, texture_path, geometries_path)
+
+    with open(os.path.join(filepath, echo_file_name), 'w', encoding='utf-8') as file:
+        #create scene
+
+        #create profile
+        profileContent = f"\t.Evaluator = new {exporter.evaluator}\n"
+        profileContent += f"\t.Distribution = new StratifiedDistribution {{ .Extend = \"{exporter.distribution_extend}\" }}\n"
+        profileContent += f"\t.Buffer = new RenderBuffer(\"{exporter.buffer_width} {exporter.buffer_height}\")\n"
+        profileContent += f"\t.Pattern = new {exporter.pattern}\n"
+        profileContent += f"\t.MinEpoch = \"1\"\n\t.MaxEpoch = \"{exporter.max_epoch}\"\n"
+        profile = f":profile = new EvaluationProfile\n{{\n{profileContent}}}"
+        file.write(profile)
 
     return {'FINISHED'}
 
@@ -82,7 +107,7 @@ class EchoExporter(Operator, ExportHelper):
     )
 
     def execute(self, context):
-        return write_data(context, self.filepath, self.use_setting)
+        return write_echo_data(context, self.filepath, self)
 
 
 def menu_func_export(self, context):
@@ -104,9 +129,11 @@ def register():
     bpy.utils.register_class(EchoExporter)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
+
 def unregister():
     bpy.utils.unregister_class(EchoExporter)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+
 
 if __name__ == "__main__":
     register()
