@@ -1,5 +1,5 @@
 import math
-from math import floor, pi
+from math import pi
 
 import bpy
 from bpy_extras.io_utils import ExportHelper
@@ -142,7 +142,17 @@ def write_echo_data(context, filepath, exporter):
 
             scene_content += mesh_entity
 
+        # add camera to scene
 
+        camera = [o for o in scene.objects if o.type == 'CAMERA'][0]
+        camera_location = camera.location
+        camera_rotation = camera.rotation_euler
+
+        camera_fov_string = f"\"{round(camera.data.angle_x * 180/pi)}\""
+        camera_position_string = f"\"{camera_location[0]} {camera_location[1]} {camera_location[2]}\""
+        camera_rotation_string = f"\"{camera_rotation[0]} {camera_rotation[1]} {camera_rotation[2]}\""
+
+        scene_content += f"\t.Add(new Camera({camera_fov_string}) {{ .Position = {camera_position_string} .Rotation = {camera_rotation_string} }})\n "
 
         scene = f":scene = new Scene\n{{\n{scene_content}}}\n\n"
 
