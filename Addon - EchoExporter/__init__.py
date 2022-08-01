@@ -14,6 +14,28 @@ def create_echo_directories(filepath, texture_path, geometries_path):
         os.mkdir(geometries_path)
 
 
+def save_geometries(context, geometries_path):
+    scene = context.scene
+    viewlayer = context.view_layer
+
+    obs = [o for o in scene.objects if o.type == 'MESH']
+    bpy.ops.object.select_all(action='DESELECT')
+
+    obj_files = []
+
+    for ob in obs:
+        viewlayer.objects.active = ob
+        ob.select_set(True)
+        ply_path = os.path.join(geometries_path, f"{ob.name}.ply")
+        bpy.ops.export_mesh.ply(
+            filepath=str(ply_path),
+            use_selection=True,
+            use_colors=False
+        )
+        ob.select_set(False)
+
+        obj_files[ob.name] = f"{ob.name}.ply"
+
 def write_echo_data(context, filepath, exporter):
     print("running write_data")
 
@@ -35,6 +57,8 @@ def write_echo_data(context, filepath, exporter):
         profile = f":profile = new EvaluationProfile\n{{\n{profileContent}}}"
         file.write(profile)
 
+    save_geometries(context, geometries_path)
+
     return {'FINISHED'}
 
 
@@ -46,7 +70,7 @@ class EchoExporter(Operator, ExportHelper):
     filename_ext = ".echo"
 
     filter_glob: StringProperty(
-        default="*.txt",
+        default="*.echo",
         options={'HIDDEN'},
         maxlen=255,  # Max internal buffer length, longer would be clamped.
     )
