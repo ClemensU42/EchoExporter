@@ -4,6 +4,13 @@ from bpy.props import *
 from bpy_types import Operator
 import os
 
+blender_materials_to_echo_materials = {
+    "ShaderNodeBsdfDiffuse": "Diffuse",
+    "ShaderNodeEmission": "Emissive",
+    "ShaderNodeBsdfGlossy": "Mirror",
+
+}
+
 
 def create_echo_directories(filepath, texture_path, geometries_path):
     if not os.path.exists(filepath):
@@ -21,7 +28,7 @@ def save_geometries(context, geometries_path):
     obs = [o for o in scene.objects if o.type == 'MESH']
     bpy.ops.object.select_all(action='DESELECT')
 
-    obj_files = []
+    obj_files = {}
 
     for ob in obs:
         viewlayer.objects.active = ob
@@ -36,6 +43,67 @@ def save_geometries(context, geometries_path):
 
         obj_files[ob.name] = f"{ob.name}.ply"
 
+    return obj_files
+
+
+def get_materials(context):
+    scene = context.scene
+
+    obs = [o for o in scene.objects if o.type == 'MESH']
+
+    materials = {}
+
+    for ob in obs:
+        node_tree = ob.active_material.node_tree
+
+        # find output node
+        output_node = None
+        for n in node_tree.nodes:
+            if n.bl_idname == 'ShaderNodeOutputMaterial':
+                output_node = n
+                break
+        if output_node is None:
+            continue
+
+        material_node = None
+        # get material connected to output node
+        for nl in node_tree.links:
+            if nl.to_node.bl_idname == 'ShaderNodeOutputMaterial':
+                material_node = nl.from_node
+                break
+        if material_node is None:
+            continue
+
+        echo_material = blender_materials_to_echo_materials.get(material_node.bl_idname)
+        if echo_material is None:
+            continue
+
+        #print(material_node.inputs.get("Color").default_value[0])
+        new_material_string = ""
+
+        if echo_material == "Diffuse":
+            color = material_node.inputs.get("Color").default_value
+            new_material_string = f"\t:material{ob.active_material_index} = new Diffuse {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+
+        elif echo_material == "Emissive":
+            color = material_node.inputs.get("Color").default_value
+            power = material_node.inputs.get("Strength").default_value
+            new_material_string = f"\t:material{ob.active_material_index} = new Emissive {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\") .Power = \"{power}\"}}\n"
+
+        elif echo_material == "Mirror":
+            color = material_node.inputs.get("Color").default_value
+            new_material_string = f"\t:material{ob.active_material_index} = new Mirror {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+
+        else:
+            continue
+
+        materials[ob.active_material_index] = new_material_string
+        print(new_material_string)
+
+    return materials
+
+
+
 def write_echo_data(context, filepath, exporter):
     print("running write_data")
 
@@ -46,9 +114,11 @@ def write_echo_data(context, filepath, exporter):
     create_echo_directories(filepath, texture_path, geometries_path)
 
     with open(os.path.join(filepath, echo_file_name), 'w', encoding='utf-8') as file:
-        #create scene
+        # create scene
+        obj_files = save_geometries(context, geometries_path)
+        get_materials(context)
 
-        #create profile
+        # create profile
         profileContent = f"\t.Evaluator = new {exporter.evaluator}\n"
         profileContent += f"\t.Distribution = new StratifiedDistribution {{ .Extend = \"{exporter.distribution_extend}\" }}\n"
         profileContent += f"\t.Buffer = new RenderBuffer(\"{exporter.buffer_width} {exporter.buffer_height}\")\n"
@@ -57,7 +127,7 @@ def write_echo_data(context, filepath, exporter):
         profile = f":profile = new EvaluationProfile\n{{\n{profileContent}}}"
         file.write(profile)
 
-    save_geometries(context, geometries_path)
+
 
     return {'FINISHED'}
 
