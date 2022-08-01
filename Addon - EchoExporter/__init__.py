@@ -1,5 +1,5 @@
 import math
-from math import pi
+from math import pi, degrees
 
 import bpy
 from bpy_extras.io_utils import ExportHelper
@@ -132,7 +132,7 @@ def write_echo_data(context, filepath, exporter):
             scale = ob.scale
             location = ob.location
 
-            rotation_string = f"\"{rotation[0]} {rotation[1]} {rotation[2]}\""
+            rotation_string = f"\"{round(degrees(rotation[0]))} {round(degrees(rotation[1]))} {round(degrees(rotation[2]))}\""
             scale_string = f"\"{scale[0]} {scale[1]} {scale[2]}\""
             location_string = f"\"{location[0]} {location[1]} {location[2]}\""
             material_string = f"link material_{ob.name.replace(' ', '')}"
@@ -150,7 +150,7 @@ def write_echo_data(context, filepath, exporter):
 
         camera_fov_string = f"\"{round(camera.data.angle_x * 180/pi)}\""
         camera_position_string = f"\"{camera_location[0]} {camera_location[1]} {camera_location[2]}\""
-        camera_rotation_string = f"\"{camera_rotation[0]} {camera_rotation[1]} {camera_rotation[2]}\""
+        camera_rotation_string = f"\"{round(degrees(camera_rotation[0]))} {round(degrees(camera_rotation[1]))} {round(degrees(camera_rotation[2]))}\""
 
         scene_content += f"\t.Add(new Camera({camera_fov_string}) {{ .Position = {camera_position_string} .Rotation = {camera_rotation_string} }})\n "
 
