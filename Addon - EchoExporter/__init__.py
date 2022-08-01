@@ -1,3 +1,6 @@
+import math
+from math import floor, pi
+
 import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import *
@@ -97,7 +100,6 @@ def get_materials(context):
             continue
 
         materials[ob.name] = new_material_string
-        print(new_material_string)
 
     return materials
 
@@ -121,7 +123,28 @@ def write_echo_data(context, filepath, exporter):
         for material_key in obj_materials:
             scene_content += obj_materials[material_key]
 
-        scene = f":scene = new Scene\n{{\n{scene_content}}}\n"
+        # add meshed to scene
+        scene = context.scene
+        obs = [o for o in scene.objects if o.type == 'MESH']
+        for ob in obs:
+            relative_geometry_path = os.path.join("./geometries", obj_files[ob.name])
+            rotation = ob.rotation_euler
+            scale = ob.scale
+            location = ob.location
+
+            rotation_string = f"\"{rotation[0]} {rotation[1]} {rotation[2]}\""
+            scale_string = f"\"{scale[0]} {scale[1]} {scale[2]}\""
+            location_string = f"\"{location[0]} {location[1]} {location[2]}\""
+            material_string = f"link material_{ob.name.replace(' ', '')}"
+            mesh_string = f"\"{relative_geometry_path}\""
+
+            mesh_entity = f"\t.Add(new MeshEntity {{ .Mesh = {mesh_string} .Material = {material_string} .Position = {location_string} .Rotation = {rotation_string} .Scale = {scale_string}}})\n"
+
+            scene_content += mesh_entity
+
+
+
+        scene = f":scene = new Scene\n{{\n{scene_content}}}\n\n"
 
         # create profile
         profileContent = f"\t.Evaluator = new {exporter.evaluator}\n"
