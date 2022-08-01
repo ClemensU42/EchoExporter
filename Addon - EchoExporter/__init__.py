@@ -83,16 +83,16 @@ def get_materials(context):
 
         if echo_material == "Diffuse":
             color = material_node.inputs.get("Color").default_value
-            new_material_string = f"\t:material{ob.active_material_index} = new Diffuse {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Diffuse {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
 
         elif echo_material == "Emissive":
             color = material_node.inputs.get("Color").default_value
             power = material_node.inputs.get("Strength").default_value
-            new_material_string = f"\t:material{ob.active_material_index} = new Emissive {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\") .Power = \"{power}\"}}\n"
+            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Emissive {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\") .Power = \"{power}\"}}\n"
 
         elif echo_material == "Mirror":
             color = material_node.inputs.get("Color").default_value
-            new_material_string = f"\t:material{ob.active_material_index} = new Mirror {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Mirror {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
 
         else:
             continue
