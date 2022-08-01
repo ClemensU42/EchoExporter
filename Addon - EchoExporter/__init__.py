@@ -78,30 +78,28 @@ def get_materials(context):
         if echo_material is None:
             continue
 
-        #print(material_node.inputs.get("Color").default_value[0])
         new_material_string = ""
 
         if echo_material == "Diffuse":
             color = material_node.inputs.get("Color").default_value
-            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Diffuse {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Diffuse {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
 
         elif echo_material == "Emissive":
             color = material_node.inputs.get("Color").default_value
             power = material_node.inputs.get("Strength").default_value
-            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Emissive {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\") .Power = \"{power}\"}}\n"
+            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Emissive {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\") .Power = \"{power}\"}}\n"
 
         elif echo_material == "Mirror":
             color = material_node.inputs.get("Color").default_value
-            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Mirror {{.Albedo = new Pure(\"rgb({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Mirror {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
 
         else:
             continue
 
-        materials[ob.active_material_index] = new_material_string
+        materials[ob.name] = new_material_string
         print(new_material_string)
 
     return materials
-
 
 
 def write_echo_data(context, filepath, exporter):
@@ -116,7 +114,14 @@ def write_echo_data(context, filepath, exporter):
     with open(os.path.join(filepath, echo_file_name), 'w', encoding='utf-8') as file:
         # create scene
         obj_files = save_geometries(context, geometries_path)
-        get_materials(context)
+        obj_materials = get_materials(context)
+
+        scene_content = ""
+        # add materials to scene
+        for material_key in obj_materials:
+            scene_content += obj_materials[material_key]
+
+        scene = f":scene = new Scene\n{{\n{scene_content}}}\n"
 
         # create profile
         profileContent = f"\t.Evaluator = new {exporter.evaluator}\n"
@@ -125,9 +130,9 @@ def write_echo_data(context, filepath, exporter):
         profileContent += f"\t.Pattern = new {exporter.pattern}\n"
         profileContent += f"\t.MinEpoch = \"1\"\n\t.MaxEpoch = \"{exporter.max_epoch}\"\n"
         profile = f":profile = new EvaluationProfile\n{{\n{profileContent}}}"
+
+        file.write(scene)
         file.write(profile)
-
-
 
     return {'FINISHED'}
 
