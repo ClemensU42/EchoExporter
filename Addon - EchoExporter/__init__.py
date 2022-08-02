@@ -85,16 +85,16 @@ def get_materials(context):
 
         if echo_material == "Diffuse":
             color = material_node.inputs.get("Color").default_value
-            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Diffuse {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Diffuse {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
 
         elif echo_material == "Emissive":
             color = material_node.inputs.get("Color").default_value
             power = material_node.inputs.get("Strength").default_value
-            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Emissive {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\") .Power = \"{power}\"}}\n"
+            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Emissive {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\") .Power = \"{power}\"}}\n"
 
         elif echo_material == "Mirror":
             color = material_node.inputs.get("Color").default_value
-            new_material_string = f"\t:material_{ob.name.replace(' ', '')} = new Mirror {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Mirror {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
 
         else:
             continue
@@ -135,7 +135,7 @@ def write_echo_data(context, filepath, exporter):
             rotation_string = f"\"{round(degrees(rotation[0]))} {round(degrees(rotation[1]))} {round(degrees(rotation[2]))}\""
             scale_string = f"\"{scale[0]} {scale[1]} {scale[2]}\""
             location_string = f"\"{location[0]} {location[1]} {location[2]}\""
-            material_string = f"link material_{ob.name.replace(' ', '')}"
+            material_string = f"link material{ob.name.replace(' ', '').replace('_','')}"
             mesh_string = f"\"{relative_geometry_path}\""
 
             mesh_entity = f"\t.Add(new MeshEntity {{ .Mesh = {mesh_string} .Material = {material_string} .Position = {location_string} .Rotation = {rotation_string} .Scale = {scale_string}}})\n"
@@ -148,11 +148,27 @@ def write_echo_data(context, filepath, exporter):
         camera_location = camera.location
         camera_rotation = camera.rotation_euler
 
-        camera_fov_string = f"\"{round(camera.data.angle_x * 180/pi)}\""
+        camera_fov_string = f"\"{round(camera.data.angle_x * 180 / pi)}\""
         camera_position_string = f"\"{camera_location[0]} {camera_location[1]} {camera_location[2]}\""
         camera_rotation_string = f"\"{round(degrees(camera_rotation[0]))} {round(degrees(camera_rotation[1]))} {round(degrees(camera_rotation[2]))}\""
 
         scene_content += f"\t.Add(new Camera({camera_fov_string}) {{ .Position = {camera_position_string} .Rotation = {camera_rotation_string} }})\n "
+
+        # add lights to scene
+
+        lights = [o for o in scene.objects if o.type == 'LIGHT']
+        point_lights = [light for light in lights if light.data.type == 'POINT']
+
+        for pl in point_lights:
+            location = pl.location
+            color = pl.data.color
+            energy = pl.data.energy
+            intensity = [color[0] * energy / 10, color[1] * energy / 10, color[2] * energy / 10]
+
+            intensity_string = f"\"hdr({intensity[0]}, {intensity[1]}, {intensity[2]})\""
+            position_string = f"\"{location[0]} {location[1]} {location[2]}\""
+
+            scene_content += f"\t.Add(new PointLight {{ .Intensity = {intensity_string} .Position = {position_string} }})\n"
 
         scene = f":scene = new Scene\n{{\n{scene_content}}}\n\n"
 
