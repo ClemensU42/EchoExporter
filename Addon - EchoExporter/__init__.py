@@ -85,7 +85,7 @@ def get_materials(context):
 
         if echo_material == "Diffuse":
             color = material_node.inputs.get("Color").default_value
-            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Matte {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Matte {{.Albedo = new Pure(\"hdr({round(color[0], 4)}, {round(color[1], 4)}, {round(color[2], 4)}, {round(color[3], 4)} )\")}}\n"
 
         elif echo_material == "Emissive":
             color = material_node.inputs.get("Color").default_value
@@ -94,11 +94,11 @@ def get_materials(context):
             color[1] *= power / 10.0
             color[2] *= power / 10.0
             color[3] *= power / 10.0
-            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Emissive {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Emissive {{.Albedo = new Pure(\"hdr({round(color[0], 4)}, {round(color[1], 4)}, {round(color[2], 4)}, {round(color[3], 4)} )\")}}\n"
 
         elif echo_material == "Mirror":
             color = material_node.inputs.get("Color").default_value
-            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Mirror {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Mirror {{.Albedo = new Pure(\"hdr({round(color[0], 4)}, {round(color[1], 4)}, {round(color[2], 4)}, {round(color[3], 4)} )\")}}\n"
 
         else:
             continue
@@ -169,8 +169,8 @@ def write_echo_data(context, filepath, exporter):
             energy = pl.data.energy
             intensity = [color[0] * energy / 10, color[1] * energy / 10, color[2] * energy / 10]
 
-            intensity_string = f"\"hdr({intensity[0]}, {intensity[1]}, {intensity[2]})\""
-            position_string = f"\"{location[0]} {location[1]} {location[2]}\""
+            intensity_string = f"\"hdr({round(intensity[0], 4)}, {round(intensity[1], 4)}, {round(intensity[2], 4)})\""
+            position_string = f"\"{round(location[0], 4)} {round(location[1], 4)} {round(location[2], 4)}\""
 
             scene_content += f"\t.Add(new PointLight {{ .Intensity = {intensity_string} .Position = {position_string} }})\n"
 
