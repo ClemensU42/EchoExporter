@@ -218,9 +218,9 @@ class EchoExporter(Operator, ExportHelper):
         name="Pattern",
         description="The pattern in which the different parts of the image will be rendered",
         items=(
-            ("HilbertCurve", "Hilbert Curve", "Pattern of the hilbert curve"),
+            ("HilbertCurvePattern", "Hilbert Curve", "Pattern of the hilbert curve"),
         ),
-        default="HilbertCurve"
+        default="HilbertCurvePattern"
     )
 
     max_epoch: IntProperty(
