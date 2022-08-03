@@ -85,12 +85,16 @@ def get_materials(context):
 
         if echo_material == "Diffuse":
             color = material_node.inputs.get("Color").default_value
-            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Diffuse {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
+            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Matte {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
 
         elif echo_material == "Emissive":
             color = material_node.inputs.get("Color").default_value
             power = material_node.inputs.get("Strength").default_value
-            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Emissive {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\") .Power = \"{power}\"}}\n"
+            color[0] *= power / 10.0
+            color[1] *= power / 10.0
+            color[2] *= power / 10.0
+            color[3] *= power / 10.0
+            new_material_string = f"\t:material{ob.name.replace(' ', '').replace('_','')} = new Emissive {{.Albedo = new Pure(\"hdr({color[0]}, {color[1]}, {color[2]}, {color[3]} )\")}}\n"
 
         elif echo_material == "Mirror":
             color = material_node.inputs.get("Color").default_value
@@ -133,12 +137,12 @@ def write_echo_data(context, filepath, exporter):
             location = ob.location
 
             rotation_string = f"\"{round(degrees(rotation[0]))} {round(degrees(rotation[1]))} {round(degrees(rotation[2]))}\""
-            scale_string = f"\"{scale[0]} {scale[1]} {scale[2]}\""
+            scale_string = f"\"{scale[0]}\""
             location_string = f"\"{location[0]} {location[1]} {location[2]}\""
             material_string = f"link material{ob.name.replace(' ', '').replace('_','')}"
             mesh_string = f"\"{relative_geometry_path}\""
 
-            mesh_entity = f"\t.Add(new MeshEntity {{ .Mesh = {mesh_string} .Material = {material_string} .Position = {location_string} .Rotation = {rotation_string} .Scale = {scale_string}}})\n"
+            mesh_entity = f"\t.Add(new MeshEntity {{ .Source = {mesh_string} .Material = {material_string} .Position = {location_string} .Rotation = {rotation_string} .Scale = {scale_string}}})\n"
 
             scene_content += mesh_entity
 
