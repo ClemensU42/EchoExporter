@@ -108,16 +108,22 @@ def get_materials(context):
     return materials
 
 
-def write_echo_data(context, filepath, exporter):
+def write_echo_data(context, original_filepath, exporter):
     print("running write_data")
 
+    echo_file_name = os.path.split(original_filepath)[1]
+    filepath = original_filepath[:-5] # ".echo" is 5 characters long so we remove 5 characters from the end of the path to turn the file name into a directory name
+    
+    dot_echo_file = os.path.join(filepath, echo_file_name)
+
+    print(f"\nfilepath: {filepath}\ndot_echo_file: {dot_echo_file}\necho_file_name: {echo_file_name}\n")
+
     texture_path = os.path.join(filepath, "textures")
-    geometries_path = os.path.join(filepath, "geometries")
-    echo_file_name = filepath.split('/')[-1]
+    geometries_path = os.path.join(filepath, "geometries")    
 
     create_echo_directories(filepath, texture_path, geometries_path)
 
-    with open(os.path.join(filepath, echo_file_name), 'w', encoding='utf-8') as file:
+    with open(dot_echo_file, 'w', encoding='utf-8') as file:
         # create scene
         obj_files = save_geometries(context, geometries_path)
         obj_materials = get_materials(context)
@@ -186,6 +192,8 @@ def write_echo_data(context, filepath, exporter):
 
         file.write(scene)
         file.write(profile)
+        
+    file.close()
 
     return {'FINISHED'}
 
@@ -193,7 +201,7 @@ def write_echo_data(context, filepath, exporter):
 class EchoExporter(Operator, ExportHelper):
     """Export the current scene as a .echo folder for the Echo Renderer"""
     bl_idname = "echo_exporter.export_data"
-    bl_label = "Export Echo Scene (.echo)"
+    bl_label = "Echo Scene (.echo)"
 
     filename_ext = ".echo"
 
@@ -263,7 +271,7 @@ class EchoExporter(Operator, ExportHelper):
 
 
 def menu_func_export(self, context):
-    self.layout.operator(EchoExporter.bl_idname, text="Export Echo Scene")
+    self.layout.operator(EchoExporter.bl_idname, text="Echo Scene (.echo)")
 
 
 bl_info = {
